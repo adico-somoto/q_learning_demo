@@ -2,14 +2,20 @@ __author__ = 'philippe'
 from Tkinter import *
 master = Tk()
 
+screen_width = master.winfo_screenwidth()
+screen_height = master.winfo_screenheight() - 100
+
+(x, y) = (5, 5)
+Width = min(screen_width, screen_height) / max(x,y)
+Height = Width
+Width *= 1.8
+
 triangle_size = 0.1
 cell_score_min = -0.2
 cell_score_max = 0.2
-Width = 100
-(x, y) = (5, 5)
 actions = ["up", "down", "left", "right"]
 
-board = Canvas(master, width=x*Width, height=y*Width)
+board = Canvas(master, width=x*Width*2, height=y*Width)
 player = (0, y-1)
 score = 1
 restart = False
@@ -22,24 +28,24 @@ cell_scores = {}
 
 def create_triangle(i, j, action):
     if action == actions[0]:
-        return board.create_polygon((i+0.5-triangle_size)*Width, (j+triangle_size)*Width,
-                                    (i+0.5+triangle_size)*Width, (j+triangle_size)*Width,
-                                    (i+0.5)*Width, j*Width,
+        return board.create_polygon((i+0.5-triangle_size)*Width, (j+triangle_size)*Height,
+                                    (i+0.5+triangle_size)*Width, (j+triangle_size)*Height,
+                                    (i+0.5)*Width, j*Height,
                                     fill="white", width=1)
     elif action == actions[1]:
-        return board.create_polygon((i+0.5-triangle_size)*Width, (j+1-triangle_size)*Width,
-                                    (i+0.5+triangle_size)*Width, (j+1-triangle_size)*Width,
-                                    (i+0.5)*Width, (j+1)*Width,
+        return board.create_polygon((i+0.5-triangle_size)*Width, (j+1-triangle_size)*Height,
+                                    (i+0.5+triangle_size)*Width, (j+1-triangle_size)*Height,
+                                    (i+0.5)*Width, (j+1)*Height,
                                     fill="white", width=1)
     elif action == actions[2]:
-        return board.create_polygon((i+triangle_size)*Width, (j+0.5-triangle_size)*Width,
-                                    (i+triangle_size)*Width, (j+0.5+triangle_size)*Width,
-                                    i*Width, (j+0.5)*Width,
+        return board.create_polygon((i+triangle_size)*Width, (j+0.5-triangle_size)*Height,
+                                    (i+triangle_size)*Width, (j+0.5+triangle_size)*Height,
+                                    i*Width, (j+0.5)*Height,
                                     fill="white", width=1)
     elif action == actions[3]:
-        return board.create_polygon((i+1-triangle_size)*Width, (j+0.5-triangle_size)*Width,
-                                    (i+1-triangle_size)*Width, (j+0.5+triangle_size)*Width,
-                                    (i+1)*Width, (j+0.5)*Width,
+        return board.create_polygon((i+1-triangle_size)*Width, (j+0.5-triangle_size)*Height,
+                                    (i+1-triangle_size)*Width, (j+0.5+triangle_size)*Height,
+                                    (i+1)*Width, (j+0.5)*Height,
                                     fill="white", width=1)
 
 
@@ -47,22 +53,29 @@ def render_grid():
     global specials, walls, Width, x, y, player
     for i in range(x):
         for j in range(y):
-            board.create_rectangle(i*Width, j*Width, (i+1)*Width, (j+1)*Width, fill="white", width=1)
+            board.create_rectangle(i*Width, j*Height, (i+1)*Width, (j+1)*Height, fill="white", width=1)
             temp = {}
             for action in actions:
                 temp[action] = create_triangle(i, j, action)
+
+            temp['label'] = StringVar()
+            Label(board, textvariable=temp['label']).place(x = i*Width+10,y = j*Height+40)
+            
             cell_scores[(i,j)] = temp
     for (i, j, c, w) in specials:
-        board.create_rectangle(i*Width, j*Width, (i+1)*Width, (j+1)*Width, fill=c, width=1)
+        board.create_rectangle(i*Width, j*Height, (i+1)*Width, (j+1)*Height, fill=c, width=1)
     for (i, j) in walls:
-        board.create_rectangle(i*Width, j*Width, (i+1)*Width, (j+1)*Width, fill="black", width=1)
+        board.create_rectangle(i*Width, j*Height, (i+1)*Width, (j+1)*Height, fill="black", width=1)
 
 render_grid()
 
 
 def set_cell_score(state, action, val):
     global cell_score_min, cell_score_max
-    triangle = cell_scores[state][action]
+    cell = cell_scores[state]
+    triangle = cell[action]
+    label = cell['label']
+    label.set(str(val)[:10])
     green_dec = int(min(255, max(0, (val - cell_score_min) * 255.0 / (cell_score_max - cell_score_min))))
     green = hex(green_dec)[2:]
     red = hex(255-green_dec)[2:]
@@ -82,7 +95,7 @@ def try_move(dx, dy):
     new_y = player[1] + dy
     score += walk_reward
     if (new_x >= 0) and (new_x < x) and (new_y >= 0) and (new_y < y) and not ((new_x, new_y) in walls):
-        board.coords(me, new_x*Width+Width*2/10, new_y*Width+Width*2/10, new_x*Width+Width*8/10, new_y*Width+Width*8/10)
+        board.coords(me, new_x*Width+Width*2/10, new_y*Height+Height*2/10, new_x*Width+Width*8/10, new_y*Height+Height*8/10)
         player = (new_x, new_y)
     for (i, j, c, w) in specials:
         if new_x == i and new_y == j:
@@ -118,7 +131,7 @@ def restart_game():
     player = (0, y-1)
     score = 1
     restart = False
-    board.coords(me, player[0]*Width+Width*2/10, player[1]*Width+Width*2/10, player[0]*Width+Width*8/10, player[1]*Width+Width*8/10)
+    board.coords(me, player[0]*Width+Width*2/10, player[1]*Height+Height*2/10, player[0]*Width+Width*8/10, player[1]*Height+Height*8/10)
 
 def has_restarted():
     return restart
@@ -128,8 +141,8 @@ master.bind("<Down>", call_down)
 master.bind("<Right>", call_right)
 master.bind("<Left>", call_left)
 
-me = board.create_rectangle(player[0]*Width+Width*2/10, player[1]*Width+Width*2/10,
-                            player[0]*Width+Width*8/10, player[1]*Width+Width*8/10, fill="orange", width=1, tag="me")
+me = board.create_rectangle(player[0]*Width+Width*2/10, player[1]*Height+Height*2/10,
+                            player[0]*Width+Width*8/10, player[1]*Height+Height*8/10, fill="orange", width=1, tag="me")
 
 board.grid(row=0, column=0)
 

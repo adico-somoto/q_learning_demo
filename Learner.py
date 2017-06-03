@@ -3,7 +3,7 @@ import World
 import threading
 import time
 
-discount = 0.3
+discount = 0.9
 actions = World.actions
 states = []
 Q = {}
@@ -41,14 +41,44 @@ def do_action(action):
     r += World.score
     return s, action, r, s2
 
+prevAct = None
+
+def getOpp(side):
+    if side == 'up':
+        return 'down'
+    if side == 'down':
+        return 'up'
+    if side == 'right':
+        return 'left'
+    if side == 'left':
+        return 'right'
 
 def max_Q(s):
+    #print 's:', s
+    x,y = s
+    
+    #global prevAct
+    #prevOppAct = getOpp(prevAct)
     val = None
     act = None
     for a, q in Q[s].items():
-        if val is None or (q > val):
+        #print 'looping, x=', x, 'a=', a
+        #if(x==0 and a=='left'):
+        #    continue
+        #if(x==9 and a=='right'):
+        #    continue
+        #if(y==0 and a=='up'):
+        #    continue
+        #if(y==9 and a=='down'):
+        #    continue
+        #print 'inside'
+        #if prevAct is None or prevOppAct != a:
+        if val is None or (q > val): # or (q == val and a == prevAct):
             val = q
             act = a
+
+    #print 'decided to go:', act, 'reward: ', val
+    #prevAct = act
     return act, val
 
 
